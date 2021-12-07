@@ -13,9 +13,9 @@ app.use(bodyParser.urlencoded({extended: true}));
 const generateRandomString = function(length=6){
     return Math.random().toString(36).substr(2, length)
 };
-//console.log(generateRandomString());
+console.log(generateRandomString());
 
-
+//ROUTES --->
 
 //// tells the Express app to use EJS as its templating/ 'view' engine.
 app.set('view engine', 'ejs');
@@ -40,18 +40,23 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-//we need the data from the form to be submitted and place somwewhere 
-app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console.. will log as an object with keyvalue pair{longuRL: 'enteredURL'}
-  res.send("Ok");         // Respond to the client with 'Ok' (we will replace this)
-});
-
 //this will render/create the page with the form and show it to the client/user
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+//we need the data from the form to be submitted and place somwewhere 
+app.post("/urls", (req, res) => {
+  console.log(req.body);  // Log the POST request body to the console.. will log as an object with keyvalue pair{longuRL: 'enteredURL'}
+  //res.send("Ok");         // Respond to the client with 'Ok' (we will replace this)
 
+  //generate a random string for our new long URL
+  //shortURL-longURL key-value pair are saved to the urlDatabase with our randomnly generated string
+  const randomString = generateRandomString();
+  urlDatabase[randomString] = req.body.longURL; //save key-value pairs to data base when we get a post request
+  console.log(urlDatabase);
+  res.redirect("/urls/:shortURL");//will redirect to the longURL page
+});
 
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { 
