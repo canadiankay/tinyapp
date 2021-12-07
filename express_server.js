@@ -28,6 +28,11 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+//this will render/create the page with the form and show it to the client/user
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
+});
+
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { 
     shortURL: req.params.shortURL, 
@@ -35,6 +40,8 @@ app.get("/urls/:shortURL", (req, res) => {
   };
   res.render("urls_show", templateVars);
 });
+
+
 
 //response can contain HTML code, which would be rendered in the client browser.
 app.get("/hello", (req, res) => {
