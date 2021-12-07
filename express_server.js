@@ -14,6 +14,7 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+//when we enter the home then it should greet us with hello (this indicates server is running to the client end)
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
