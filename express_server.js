@@ -1,3 +1,6 @@
+//res.render ("name of template", an object with a bunch of key/value pairs)
+//so that in our template, we can access each of these key/value pairs
+
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -22,6 +25,14 @@ app.get("/urls.json", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
+});
+
+app.get("/urls/:shortURL", (req, res) => {
+  const templateVars = { 
+    shortURL: req.params.shortURL, 
+    longURL: urlDatabase[req.params.shortURL] 
+  };
+  res.render("urls_show", templateVars);
 });
 
 //response can contain HTML code, which would be rendered in the client browser.
