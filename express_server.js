@@ -5,6 +5,10 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
+//body-parser library will convert the request body from a Buffer into string that we can read.
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({extended: true}));
+
 //// tells the Express app to use EJS as its templating/ 'view' engine.
 app.set('view engine', 'ejs');
 
@@ -28,10 +32,18 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+//we need the data from the form to be submitted and place somwewhere 
+app.post("/urls", (req, res) => {
+  console.log(req.body);  // Log the POST request body to the console
+  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+});
+
 //this will render/create the page with the form and show it to the client/user
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
+
+
 
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { 
