@@ -9,6 +9,14 @@ const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
+//this will create a random key of 6 characters (from any combo of numbers and letters) to be the key to our url for our database
+const generateRandomString = function(length=6){
+    return Math.random().toString(36).substr(2, length)
+};
+//console.log(generateRandomString());
+
+
+
 //// tells the Express app to use EJS as its templating/ 'view' engine.
 app.set('view engine', 'ejs');
 
@@ -34,8 +42,8 @@ app.get("/urls", (req, res) => {
 
 //we need the data from the form to be submitted and place somwewhere 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  console.log(req.body);  // Log the POST request body to the console.. will log as an object with keyvalue pair{longuRL: 'enteredURL'}
+  res.send("Ok");         // Respond to the client with 'Ok' (we will replace this)
 });
 
 //this will render/create the page with the form and show it to the client/user
