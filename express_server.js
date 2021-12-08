@@ -97,6 +97,11 @@ app.get("/login", (req, res) => {
 //logout page
 app.get("/logout", (req, res) => {
 })
+//register page
+app.get("/register", (req, res) => {
+  res.render("register");
+  res.send("404")
+});
 
 //response can contain HTML code, which would be rendered in the client browser.
 app.get("/hello", (req, res) => {
@@ -132,6 +137,10 @@ app.post("/logout", (req, res) => {
   res.clearCookie("username",username); // clear cookie
   res.redirect("/urls");
 });
+
+// app.post("/register", (req, res) => {
+  
+// });
 
 
 app.listen(PORT, () => {
