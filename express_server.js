@@ -97,11 +97,7 @@ app.get("/login", (req, res) => {
 //logout page
 app.get("/logout", (req, res) => {
 })
-//register page
-app.get("/register", (req, res) => {
-  res.render("register");
-  res.send("404")
-});
+
 
 //response can contain HTML code, which would be rendered in the client browser.
 app.get("/hello", (req, res) => {
@@ -138,9 +134,34 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
-// app.post("/register", (req, res) => {
+
+
+//Authentication Routes
+//register page
+app.get("/register", (req, res) => {
+  res.render("register");
+});
+
+app.post("/register", (req, res) => { //when I submit register form I want the info to be receive that info from
   
-// });
+  // Extract the user info from the incoming form -- using req.body (body parser of express)
+  const email = req.body.email;
+  const password = req.body.password; 
+    ////this password and username key match the name attribute on the register form 
+
+
+  //validate email
+
+
+  //create a new user id
+
+  //add email, password to user's db (i.e. create a new user)
+
+  //set cookie with the username
+
+  //redirect to '/urls'
+
+});
 
 
 app.listen(PORT, () => {
