@@ -5,6 +5,9 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
+
 //body-parser library will convert the request body from a Buffer into string that we can read.
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
@@ -36,13 +39,17 @@ app.get("/urls.json", (req, res) => {
 }); //this will print a JSON string representing all the items urlDatabase Object
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase }; //object of all the urls
+  const templateVars = { 
+    urls: urlDatabase, //object of all the urls
+    username: req.cookies["username"]
+  }; 
   res.render("urls_index", templateVars); //if you have the urls it'll be on the index page
 });
 
 //this will render/create the page with the form and show it to the client/user
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new"); 
+  const templateVars = {username: req.cookies["username"]};
+  res.render("urls_new", templateVars); 
 });
 
 //we need the data from the form to be submitted and place somwewhere 
@@ -56,6 +63,7 @@ app.post("/urls", (req, res) => {
   urlDatabase[randomString] = req.body.longURL; //save key-value pairs to data base when we get a post request
   //this gives random string generated to a new URL that client provided
   console.log(urlDatabase);
+  
   res.redirect(`/urls/${randomString}`);//will redirect to the longURL page of that randomstring
 });
 
@@ -64,7 +72,8 @@ app.post("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL]
+    longURL: urlDatabase[req.params.shortURL],
+    username: req.cookies["username"]
   };
   res.render("urls_show", templateVars);
 }); 
@@ -74,14 +83,25 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL]; //object containing properties mapped to a named route parameters=
   //the long URL will look for its shortURL key in the database
 
+  const templateVars = {username: req.cookies["username"]}
+
   //res.render("urls_show", templateVars);
   //redirect to longURL
-  res.redirect(longURL);
+  res.redirect(longURL, templateVars);
 });
+
+//login page
+app.get("/login", (req, res) => {
+})
+
+//logout page
+app.get("/logout", (req, res) => {
+})
 
 //response can contain HTML code, which would be rendered in the client browser.
 app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+  const templateVars = {username: req.cookies["username"]}
+  res.send("<html><body>Hello <b>World</b></body></html>\n", templateVars);
 });
 
 //updated delete button (in index) and operation
@@ -89,6 +109,29 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL]; //looks for specific key/shorturl and deletes it
   res.redirect("/urls");
 })
+
+//add an edit form + which will update the resource (i.e. the long url associated with the key)
+app.post("/urls/:id", (req, res) => {
+  let shortURL = req.params.id;
+  let fullURL = req.body.longURL;
+  console.log("editing", req.body);
+  urlDatabase[shortURL] = fullURL;
+  res.redirect("/urls");
+});
+
+//handle /login
+app.post("/login", (req, res) => {
+  const username = req.body.username; //whatever gets entered will be stored here
+  res.cookie("username", username); // set cookie
+  res.redirect("/urls");
+});
+
+app.post("/logout", (req, res) => {
+  const username = req.body.username; //whatever gets entered will be stored here
+  res.cookie("username", username); // set cookie
+  res.clearCookie("username",username); // clear cookie
+  res.redirect("/urls");
+});
 
 
 app.listen(PORT, () => {
