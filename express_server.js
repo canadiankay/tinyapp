@@ -23,6 +23,7 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+//we want to go to our users object and see if the address in the email key already exists
 
 const users = { 
   "userRandomID": {
@@ -157,6 +158,14 @@ app.post("/register", (req, res) => { //when I submit register form I want the i
   // Extract the user info from the incoming form after client clicks register -- using req.body (body parser of express)
   const email = req.body.email;
   const password = req.body.password; 
+
+  //handle registration errors - if email and/or password are blank
+  if (email === "" || password === "") {
+    return res.status(400).send("Please enter a valid email address and/or password");
+  }
+  
+  //handle registration errors - if email already exists
+    //we want to check if email =req.body.email === email from the database
 
   //create/generate a new user id
   const id = generateRandomString();
