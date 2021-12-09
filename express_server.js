@@ -153,9 +153,9 @@ app.post("/register", (req, res) => { //when I submit register form I want the i
   const password = req.body.password; 
 
   //create/generate a new user id
-  const randomUserId = generateRandomString();
-  users[randomUserId] = { //This endpoint should add a new user object to the global users object
-    id: randomUserId,
+  const id = generateRandomString();
+  users[id] = { //This endpoint should add a new user object to the global users object
+    id: id,
     email: email,
     password: password
   }
