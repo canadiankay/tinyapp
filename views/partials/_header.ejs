@@ -11,15 +11,19 @@
 
       </div>
     </div>
+    <!-- adding the register and login button to the header-->
     <%if (!user) {%>
       <a class="navbar navbar-light" href="/login">Login</a>
       <a class="navbar navbar-light" href="/register">Register</a>
-      <!-- <form class="form-inline" action="/login" method="POST">
+
+      <!-- REMOVE THE LOGIN FORM 
+        <form class="form-inline" action="/login" method="POST">
         <label for=user> USER </label>
         <input class="form-control" type="text" value="" name="user"
           style="width: 200px; margin: 1em; color: orange">
         <button type="submit" class="btn btn-primary">LOGIN</button>
-      </form> -->
+      </form> 
+    -->
 
       <% } else { %>
         Logged In As: <%= user.email %> !

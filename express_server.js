@@ -125,6 +125,11 @@ app.post("/urls/:id", (req, res) => {
 
 
 //------------ CREATE/POST --------------------- these two are found in _header and they allow for login/logout and displays login when a person enters username
+// temporaray route to show all the users in the users database
+app.get('/users.json', (req, res) => {
+  res.json(users);
+});
+
 app.post("/login", (req, res) => {
   const user_id = req.cookies.user_id
   //const username = req.body.username; //whatever gets entered will be stored here
@@ -144,15 +149,11 @@ app.post("/logout", (req, res) => {
 
 //----------------------------------------------Authentication Routes -------------------->
 // --------------------------REGISTRATION-------------------> 
-app.get("/register", (req, res) => { //endpoint-- render registration page 
-  res.render("register");
+app.get("/register", (req, res) => { //endpoint
+  res.render("register"); // render registration page 
   res.status(404);
 });
 
-// temporaray route to show all the users in the users database
-app.get('/users.json', (req, res) => {
-  res.json(users);
-});
 
 //receive info from the registration page- registration handler
 app.post("/register", (req, res) => { //when I submit register form I want the info to be receive that info from
@@ -175,18 +176,6 @@ app.post("/register", (req, res) => { //when I submit register form I want the i
     }
     return false;
   };
-  //function that will authenticate user 
-  const authenticateUser = (email, password, users => {
-    console.log({email,password})
-    const user = findUserByEmail(email, users);
-    console.log({user});
-  
-    if (user && user.password === password) {
-      return user;
-    }
-  
-    return false;
-  });
 
 
   //handle registration errors - if email already exists
@@ -206,7 +195,7 @@ app.post("/register", (req, res) => { //when I submit register form I want the i
     email: email,
     password: password
   }
-  console.log(`${newUser}: users`) // check if user is being logged on with the global scope object
+  console.log(`${newUser}: users`);
 
   // add the new user to the  users object db 
     users[id] = newUser;
