@@ -143,7 +143,7 @@ app.post("/logout", (req, res) => {
 
 
 //----------------------------------------------Authentication Routes -------------------->
-// REGISTRATION 
+// --------------------------REGISTRATION-------------------> 
 app.get("/register", (req, res) => { //endpoint-- render registration page 
   res.render("register");
   res.status(404);
@@ -218,6 +218,13 @@ app.post("/register", (req, res) => { //when I submit register form I want the i
   //redirect to '/urls'
   res.redirect("/urls");
 });
+
+//----------------------------------------------------------------LOGIN ---------->
+app.get("/login", (req, res) => { //endpoint-- render registration page 
+  res.render("login");
+});
+
+
 
 
 //------------------ DELETE-------------------------------
