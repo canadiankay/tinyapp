@@ -189,7 +189,6 @@ app.post("/register", (req, res) => { //when I submit register form I want the i
   });
 
 
-
   //handle registration errors - if email already exists
     //we want to check if email =req.body.email === email from the database
     const user = findUserByEmail(email,users);
