@@ -55,9 +55,6 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase); //this will print a JSON string representing all the items for the urlDatabase Object
 }); 
 
-
-
-
 app.get("/urls", (req, res) => {
   const user_id = req.cookies.user_id
   const templateVars = { 
@@ -152,6 +149,11 @@ app.get("/register", (req, res) => { //endpoint-- render registration page
   res.status(404);
 });
 
+// temporaray route to show all the users in the users database
+app.get('/users.json', (req, res) => {
+  res.json(users);
+});
+
 //receive info from the registration page- registration handler
 app.post("/register", (req, res) => { //when I submit register form I want the info to be receive that info from
   
@@ -163,18 +165,52 @@ app.post("/register", (req, res) => { //when I submit register form I want the i
   if (email === "" || password === "") {
     return res.status(400).send("Please enter a valid email address and/or password");
   }
+  //function that will look for email in the users object
+  const findUserByEmail = (email, users) => {
+    for (let id in users) {
+      const user = users[id]; // => retrieve the value
+      if (user.email === email) {
+        return user;
+      }
+    }
+    return false;
+  };
+  //function that will authenticate user 
+  const authenticateUser = (email, password, users => {
+    console.log({email,password})
+    const user = findUserByEmail(email, users);
+    console.log({user});
   
+    if (user && user.password === password) {
+      return user;
+    }
+  
+    return false;
+  });
+
+
+
   //handle registration errors - if email already exists
     //we want to check if email =req.body.email === email from the database
+    const user = findUserByEmail(email,users);
+    if (user) {
+      res.status(403).send('Sorry, user already exists!');
+      return;
+    }
 
   //create/generate a new user id
   const id = generateRandomString();
-  users[id] = { //This endpoint should add a new user object to the global users object
+
+  //add name, email, password to our users db => create a new user
+  const newUser = { //This endpoint should add a new user object to the global users object
     id: id,
     email: email,
     password: password
   }
-  console.log(`${users}: users`) // check if user is being logged on with the global scope object
+  console.log(`${newUser}: users`) // check if user is being logged on with the global scope object
+
+  // add the new user to the  users object db 
+    users[id] = newUser;
 
 
   //ask browser to set cookie for us that will be attached to a userid
