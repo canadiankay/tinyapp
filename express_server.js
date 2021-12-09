@@ -50,20 +50,19 @@ app.get("/", (req, res) => {
   res.send("Hello!"); //respond with hello when client enters home
 });
 
-//response can contain HTML code, which would be rendered in the client browser.
-app.get("/hello", (req, res) => {
-  const templateVars = {username: req.cookies["username"]}
-  res.send("<html><body>Hello <b>World</b></body></html>\n", templateVars);
-});
-
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase); //this will print a JSON string representing all the items for the urlDatabase Object
 }); 
 
+
+
+
 app.get("/urls", (req, res) => {
+  const user_id = req.cookies.user_id
   const templateVars = { 
     urls: urlDatabase, 
-    username: req.cookies["username"] //shows username in header
+    //username: req.cookies["username"] //shows username in header
+    user: users[user_id] //shows user now
   }; 
   res.render("urls_index", templateVars); 
 });
@@ -85,27 +84,31 @@ app.post("/urls", (req, res) => {
 
 //this will render/create the page with the form and show it to the client/user
 app.get("/urls/new", (req, res) => {
-  const templateVars = {username: req.cookies["username"]}; //added this so that username at the top still shows in header
+  const user_id = req.cookies.user_id
+  //const templateVars = {username: req.cookies["username"]}; //added this so that username at the top still shows in header
+  const templateVars = {user: users[user_id]}; //added this so that username at the top still shows in header
   res.render("urls_new", templateVars); 
 });
 
 
 //should render and send us back to the show page with all of the urls
 app.get("/urls/:shortURL", (req, res) => {
+  const user_id = req.cookies.user_id
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies["username"]
+    //username: req.cookies["username"]
+    user: users[user_id]
   };
   res.render("urls_show", templateVars);
 }); 
 
 //redirects us to the longURL only when we're on the show page not when we submit the form
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL]; //object containing properties mapped to a named route parameters=
-  //the long URL will look for its shortURL key in the database
-
-  const templateVars = {username: req.cookies["username"]}
+  const longURL = urlDatabase[req.params.shortURL]; //object containing properties mapped to a named route parameters//the long URL will look for its shortURL key in the database
+  const user_id = req.cookies.user_id
+  //const templateVars = {username: req.cookies["username"]}
+  const templateVars = {user: users[user_id]}
 
   //res.render("urls_show", templateVars);
   //redirect to longURL
@@ -113,11 +116,10 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 
-
 //add an edit form + which will update the resource (i.e. the long url associated with the key)
 app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
-  constfullURL = req.body.longURL;
+  const fullURL = req.body.longURL;
   console.log("editing", req.body);
   urlDatabase[shortURL] = fullURL;
   res.redirect("/urls");
@@ -126,14 +128,18 @@ app.post("/urls/:id", (req, res) => {
 
 //------------ CREATE/POST --------------------- these two are found in _header and they allow for login/logout and displays login when a person enters username
 app.post("/login", (req, res) => {
-  const username = req.body.username; //whatever gets entered will be stored here
-  res.cookie("username", username); // set cookie with the username
+  const user_id = req.cookies.user_id
+  //const username = req.body.username; //whatever gets entered will be stored here
+  user: users[user_id]
+  res.cookie("user_id", user_id); // set cookie with the username
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  const username = req.body.username; //whatever gets entered will be stored here
-  res.clearCookie("username",username); // clear cookie with that username
+  //const username = req.body.username; //whatever gets entered will be stored here
+  const user_id = req.cookies.user_id
+  //res.clearCookie("username",username); // clear cookie with that username
+  res.clearCookie("user_id", user_id); 
   res.redirect("/urls");
 });
 
@@ -176,6 +182,13 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL]; //looks for specific key/shorturl and deletes it
   res.redirect("/urls");
 })
+
+//-------
+// //response can contain HTML code, which would be rendered in the client browser.
+// app.get("/hello", (req, res) => {
+//   const templateVars = {username: req.cookies["username"]}
+//   res.send("<html><body>Hello <b>World</b></body></html>\n", templateVars);
+// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
