@@ -1,55 +1,71 @@
-//res.render ("name of template", an object with a bunch of key/value pairs)
-//so that in our template, we can access each of these key/value pairs
+/* MY NOTES
+res.render ("name of template", an object with a bunch of key/value pairs) so that in our template, we can access each of these key/value pairs 
+//if you have the urls it'll be on the index page
 
+*/
+const PORT = 8080;
 const express = require("express");
-const app = express();
-const PORT = 8080; // default port 8080
-
+const app = express(); //create express app
+const bodyParser = require("body-parser"); //body-parser library will convert the request body from a Buffer into string that we can read.
 const cookieParser = require('cookie-parser');
-app.use(cookieParser());
-
-//body-parser library will convert the request body from a Buffer into string that we can read.
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
-
-//this will create a random key of 6 characters (from any combo of numbers and letters) to be the key to our url for our database
-const generateRandomString = function(length=6){
-    return Math.random().toString(36).substr(2, length)
-};
-console.log(generateRandomString());
-
-//ROUTES --->
 
 //// tells the Express app to use EJS as its templating/ 'view' engine.
 app.set('view engine', 'ejs');
 
+//----------------------------------------------------------------MIDDLEWARE----> will run for every request
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
+
+
+// ----------------------------------------------------------------DATA -----> //in memory database
 //this object is used to keep track of all the shortened URLs
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
-//when client enters home then it should greet them with hello 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "brownsugar"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "chocolatechips"
+  }
+}
+
+// ---------------------------------------------------------------- HELPER FUNCTIONS-----> 
+// generate random six-character userID key for our urls in the database
+const generateRandomString = function(length=6){
+    return Math.random().toString(36).substr(2, length)
+};
+console.log(generateRandomString());
+
+
+//------------------------------------------------------END POINTS & ROUTES ----------------------------->
 app.get("/", (req, res) => {
-  res.send("Hello!"); //respond with hello
+  res.send("Hello!"); //respond with hello when client enters home
+});
+
+//response can contain HTML code, which would be rendered in the client browser.
+app.get("/hello", (req, res) => {
+  const templateVars = {username: req.cookies["username"]}
+  res.send("<html><body>Hello <b>World</b></body></html>\n", templateVars);
 });
 
 app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-}); //this will print a JSON string representing all the items urlDatabase Object
+  res.json(urlDatabase); //this will print a JSON string representing all the items for the urlDatabase Object
+}); 
 
 app.get("/urls", (req, res) => {
   const templateVars = { 
-    urls: urlDatabase, //object of all the urls
-    username: req.cookies["username"]
+    urls: urlDatabase, 
+    username: req.cookies["username"] //shows username in header
   }; 
-  res.render("urls_index", templateVars); //if you have the urls it'll be on the index page
-});
-
-//this will render/create the page with the form and show it to the client/user
-app.get("/urls/new", (req, res) => {
-  const templateVars = {username: req.cookies["username"]};
-  res.render("urls_new", templateVars); 
+  res.render("urls_index", templateVars); 
 });
 
 //we need the data from the form to be submitted and place somwewhere 
@@ -65,6 +81,12 @@ app.post("/urls", (req, res) => {
   console.log(urlDatabase);
   
   res.redirect(`/urls/${randomString}`);//will redirect to the longURL page of that randomstring
+});
+
+//this will render/create the page with the form and show it to the client/user
+app.get("/urls/new", (req, res) => {
+  const templateVars = {username: req.cookies["username"]}; //added this so that username at the top still shows in header
+  res.render("urls_new", templateVars); 
 });
 
 
@@ -90,79 +112,70 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL, templateVars);
 });
 
-//login page
-app.get("/login", (req, res) => {
-})
 
-//logout page
-app.get("/logout", (req, res) => {
-})
-
-
-//response can contain HTML code, which would be rendered in the client browser.
-app.get("/hello", (req, res) => {
-  const templateVars = {username: req.cookies["username"]}
-  res.send("<html><body>Hello <b>World</b></body></html>\n", templateVars);
-});
-
-//updated delete button (in index) and operation
-app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL]; //looks for specific key/shorturl and deletes it
-  res.redirect("/urls");
-})
 
 //add an edit form + which will update the resource (i.e. the long url associated with the key)
 app.post("/urls/:id", (req, res) => {
-  let shortURL = req.params.id;
-  let fullURL = req.body.longURL;
+  const shortURL = req.params.id;
+  constfullURL = req.body.longURL;
   console.log("editing", req.body);
   urlDatabase[shortURL] = fullURL;
   res.redirect("/urls");
 });
 
-//handle /login
+
+//------------ CREATE/POST --------------------- these two are found in _header and they allow for login/logout and displays login when a person enters username
 app.post("/login", (req, res) => {
   const username = req.body.username; //whatever gets entered will be stored here
-  res.cookie("username", username); // set cookie
+  res.cookie("username", username); // set cookie with the username
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
   const username = req.body.username; //whatever gets entered will be stored here
-  res.cookie("username", username); // set cookie
-  res.clearCookie("username",username); // clear cookie
+  res.clearCookie("username",username); // clear cookie with that username
   res.redirect("/urls");
 });
 
 
-
-//Authentication Routes
-//register page
-app.get("/register", (req, res) => {
+//----------------------------------------------Authentication Routes -------------------->
+// REGISTRATION 
+app.get("/register", (req, res) => { //endpoint-- render registration page 
   res.render("register");
+  res.status(404);
 });
 
+//receive info from the registration page- registration handler
 app.post("/register", (req, res) => { //when I submit register form I want the info to be receive that info from
   
-  // Extract the user info from the incoming form -- using req.body (body parser of express)
+  // Extract the user info from the incoming form after client clicks register -- using req.body (body parser of express)
   const email = req.body.email;
   const password = req.body.password; 
-    ////this password and username key match the name attribute on the register form 
+
+  //create/generate a new user id
+  const randomUserId = generateRandomString();
+  users[randomUserId] = { //This endpoint should add a new user object to the global users object
+    id: randomUserId,
+    email: email,
+    password: password
+  }
+  console.log(`${users}: users`) // check if user is being logged on with the global scope object
 
 
-  //validate email
-
-
-  //create a new user id
-
-  //add email, password to user's db (i.e. create a new user)
-
-  //set cookie with the username
+  //ask browser to set cookie for us that will be attached to a userid
+  res.cookie("user_id", id); //test cookie in browswer
 
   //redirect to '/urls'
-
+  res.redirect("/urls");
 });
 
+
+//------------------ DELETE-------------------------------
+//updated delete button (in index) and operation
+app.post("/urls/:shortURL/delete", (req, res) => {
+  delete urlDatabase[req.params.shortURL]; //looks for specific key/shorturl and deletes it
+  res.redirect("/urls");
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
