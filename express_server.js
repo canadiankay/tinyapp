@@ -229,7 +229,24 @@ app.post("/login", (req, res) => {
   const email = req.body.email; //this matches the email attribute form the register form
   const password = req.body.password; 
 
+  //retrive the user with that email from the users database
   //chcek if user exists-- use for in loop that we made previously to check if email is there
+  const user = findUserByEmail(email, users);
+
+  //if user exists and password in the db matches what they gave us in the form
+  if (user && user.password === password) { 
+    //then user is authenticated == if yes, then we want to log them in
+    res.cookie('user_id', user.id) //set cookie to their user id 
+    res.redirect("/urls");
+    return;
+
+  }
+
+  //user is not authenticated
+
+  
+
+
 
 
 
