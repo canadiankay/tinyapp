@@ -9,7 +9,7 @@
 
     <title>REGISTRATION FORM</title>
   </head>
-  <!--adding the header to the registration page-->
+  <!--adding the header to the registration page
   <header>
     <nav class="navbar navbar-expand-md navbar-dark bg-success">
       <a class="navbar-brand" href="/urls">TinyApp</a>
@@ -26,11 +26,13 @@
     </nav>
   </header>
 
-  <body class="border border-top border-right border-bottom border-left border-warning " >
+  <body class="border border-top border-right border-bottom border-left border-warning " > 
     
+  We no longer need to add the above code that doesn't include the conditional since we set user to null in server-->
+    <%- include('partials/_header') %>
 
       <h1> REGISTER</h1>
-      
+
   <div class="form-group" >
     <main style="margin: 1em;">
       <form 
