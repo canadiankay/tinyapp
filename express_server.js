@@ -246,7 +246,7 @@ app.post("/login", (req, res) => {
   };
 
   //user is not authenticated
-  res.status(401).send("Wrong credentials. Please register and create an account.")
+  res.status(401).send("Could not find an account associated iwth that email. Please register and create an account.")
 
 
 });
