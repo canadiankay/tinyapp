@@ -246,7 +246,7 @@ app.post("/login", (req, res) => {
   };
 
   //user is not authenticated
-  res.status(401).send("Could not find an account associated iwth that email. Please register and create an account.")
+  res.status(403).send("Could not find an account associated iwth that email. Please register and create an account.")
 
 
 });
@@ -257,7 +257,7 @@ app.post("/logout", (req, res) => {
 
   //clear cookie
   //res.clearCookie("username",username); // clear cookie with that username
-  res.clearCookie("user_id"); 
+  res.clearCookie("user_id", user_id); 
   res.redirect("/urls");
 });
 
