@@ -16,21 +16,26 @@ const app = express(); //create express app
 const bodyParser = require("body-parser"); //body-parser library will convert the request body from a Buffer into string that we can read.
 const cookieParser = require('cookie-parser');
 
-//// tells the Express app to use EJS as its templating/ 'view' engine.
-app.set('view engine', 'ejs');
 
+app.set('view engine', 'ejs');
 //----------------------------------------------------------------MIDDLEWARE----> will run for every request
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 
 
 // ----------------------------------------------------------------DATA -----> //in memory database
-//this object is used to keep track of all the shortened URLs
+//this object is used to keep track of all the URLs- shortURL keys and longURL values
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "aJvfe3"
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID:"aJvfe3"
+  }
 };
-//we want to go to our users object and see if the address in the email key already exists
+
 
 const users = { 
   "userRandomID": {
@@ -66,6 +71,8 @@ const findUserByEmail = (email, userDatabase) => {
     return false;
 };
 
+//create a helper function that searches through each url in the database, and only returns the urls that have that specific users userid
+
 //------------------------------------------------------END POINTS & ROUTES ----------------------------->
 app.get("/", (req, res) => {
   res.send("Hello!"); //respond with hello when client enters home
@@ -92,14 +99,15 @@ app.post("/urls", (req, res) => {
     //generate a random string for our new long URL
     //shortURL-longURL key-value pair are saved to the urlDatabase with our randomnly generated string
     const randomString = generateRandomString();
-    urlDatabase[randomString] = req.body.longURL; //this gives random string id to the new long URL that client provided
+    urlDatabase.randomString.longURL = req.body.longURL; //this gives random string id to the new long URL that client provided
+    //can be rewritten as urlDatabase[randomString]longURL
     res.redirect(`/urls/${randomString}`);//will redirect to the longURL page of that randomstring
   } else {
     res.status(403).send("Sorry but you cannot access this page if you are not logged. Please log in or register for an account")
   }
 });
 
-//this will render/create the page with the form and show it to the client/user
+//this will render/create the page to create new urls and show it to the client/user
 app.get("/urls/new", (req, res) => {
   const user_id = req.cookies.user_id
   //if we do not have a user logged in, then redirect them to the login page
@@ -119,8 +127,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const user_id = req.cookies.user_id
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
-    //username: req.cookies["username"]
+    longURL: urlDatabase[req.params.shortURL].longURL,
     user: users[user_id]
   };
   res.render("urls_show", templateVars);
@@ -128,9 +135,11 @@ app.get("/urls/:shortURL", (req, res) => {
 
 //redirects us to the longURL only when we're on the show page not when we submit the form
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL]; //object containing properties mapped to a named route parameters//the long URL will look for its shortURL key in the database
+  const longURL = urlDatabase[req.params.shortURL].longURL; //object containing properties mapped to a named route parameters//the long URL will look for its shortURL key in the database
+  //req.param is anything passed as a parameter anythign after the colon ...via :shortURL
+  //can be rewritten as urlDatabase.req.params.shortURL.longURL
+
   const user_id = req.cookies.user_id
-  //const templateVars = {username: req.cookies["username"]}
   const templateVars = {
     user: users[user_id]
   };
@@ -145,7 +154,7 @@ app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const fullURL = req.body.longURL;
   console.log("editing", req.body);
-  urlDatabase[shortURL] = fullURL;
+  urlDatabase[shortURL].longURL = fullURL;
   res.redirect("/urls");
 });
 
@@ -254,11 +263,9 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  //const username = req.body.username; //whatever gets entered will be stored here
   const user_id = req.cookies.user_id
 
   //clear cookie
-  //res.clearCookie("username",username); // clear cookie with that username
   res.clearCookie("user_id", user_id); 
   res.redirect("/urls");
 });

@@ -28,7 +28,9 @@
         <% for(let url in urls) { %>
           <tr>
             <td><%= url %></td>
-            <td><%= urls[url] %></td>
+            <td><%= urls[url].longURL %></td>
+            <!-- url is gonna give me the key and I want to access longURL specifically
+            can be rewritten as urls.url.longURL %></td>-->
             <td>
               <button type="button" class="btn btn-outline-primary"><a href="/urls/<%= url %>">Edit</a></button>
               </td>
