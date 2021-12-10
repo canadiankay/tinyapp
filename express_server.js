@@ -79,7 +79,6 @@ app.get("/urls", (req, res) => {
   const user_id = req.cookies.user_id
   const templateVars = { 
     urls: urlDatabase, 
-    //username: req.cookies["username"] //shows username in header
     user: users[user_id] //shows user now
   }; 
   res.render("urls_index", templateVars); 
@@ -87,27 +86,30 @@ app.get("/urls", (req, res) => {
 
 //we need the data from the form to be submitted and place somwewhere 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  //what did my client request from me and let me show them what they requested so will showthem all the ursl// Log the POST request body to the console.. will log as an object with keyvalue pair{longuRL: 'enteredURL'}
-  //res.send("Ok");         // Respond to the client with 'Ok' (we will replace this)
-
-  //generate a random string for our new long URL
-  //shortURL-longURL key-value pair are saved to the urlDatabase with our randomnly generated string
-  const randomString = generateRandomString();
-  urlDatabase[randomString] = req.body.longURL; //save key-value pairs to data base when we get a post request
-  //this gives random string generated to a new URL that client provided
-  console.log(urlDatabase);
-  
-  res.redirect(`/urls/${randomString}`);//will redirect to the longURL page of that randomstring
+  const user_id = req.cookies.user_id
+  // a non-logged in user cannot add a new url
+  if (user_id) {
+    //generate a random string for our new long URL
+    //shortURL-longURL key-value pair are saved to the urlDatabase with our randomnly generated string
+    const randomString = generateRandomString();
+    urlDatabase[randomString] = req.body.longURL; //this gives random string id to the new long URL that client provided
+    res.redirect(`/urls/${randomString}`);//will redirect to the longURL page of that randomstring
+  } else {
+    res.status(403).send("Sorry but you cannot access this page if you are not logged. Please log in or register for an account")
+  }
 });
 
 //this will render/create the page with the form and show it to the client/user
 app.get("/urls/new", (req, res) => {
-  //get user id from cookie
   const user_id = req.cookies.user_id
-  //const templateVars = {username: req.cookies["username"]}; //added this so that username at the top still shows in header
+  //if we do not have a user logged in, then redirect them to the login page
+  if (!user_id) {
+    res.redirect("/login");
+    return;
+  }
   const templateVars = {
     user: users[user_id]
-  }; //added this so that username at the top still shows in header
+  }; 
   res.render("urls_new", templateVars); 
 });
 
