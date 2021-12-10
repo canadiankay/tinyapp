@@ -239,28 +239,12 @@ app.post("/login", (req, res) => {
     res.cookie('user_id', user.id) //set cookie to their user id 
     res.redirect("/urls");
     return;
-
   }
 
   //user is not authenticated
-
-  
-
+  res.status(401).send("Wrong credentials. Please register and create an account.")
 
 
-
-
-
-
-
-
-
-
-  const user_id = req.cookies.user_id
-  //const username = req.body.username; //whatever gets entered will be stored here
-  user: users[user_id]
-  res.cookie("user_id", user_id); // set cookie with the username
-  res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
