@@ -7,6 +7,8 @@ instead of doing console log of the user database, we can alternatively do domai
 since the header is shown across all of the ejs pages, and we use the variable 'user' in the header, we need user to be in every single app.get that renders these pages
 //therefore need a templateVars everywhere with the user key anywhere we are rendering a file
 
+//we do not need an else statement after an if statement if the if-statement has a return because it tells us to stop (see app.post (login))
+
 */
 const PORT = 8080;
 const express = require("express");
@@ -33,13 +35,13 @@ const urlDatabase = {
 const users = { 
   "userRandomID": {
     id: "userRandomID", 
-    email: "user@example.com", 
-    password: "brownsugar"
+    email: "ilove@baking.com", 
+    password: "sugar"
   },
  "user2RandomID": {
     id: "user2RandomID", 
-    email: "user2@example.com", 
-    password: "chocolatechips"
+    email: "cookies@everyday.com", 
+    password: "chocolate"
   }
 }
 
@@ -236,10 +238,12 @@ app.post("/login", (req, res) => {
   //if user exists and password in the db matches what they gave us in the form
   if (user && user.password === password) { 
     //then user is authenticated == if yes, then we want to log them in
+
+    //we want broswer to store the user id in a cookie
     res.cookie('user_id', user.id) //set cookie to their user id 
     res.redirect("/urls");
     return;
-  }
+  };
 
   //user is not authenticated
   res.status(401).send("Wrong credentials. Please register and create an account.")
@@ -271,6 +275,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 //   const templateVars = {username: req.cookies["username"]}
 //   res.send("<html><body>Hello <b>World</b></body></html>\n", templateVars);
 // });
+
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
