@@ -28,12 +28,13 @@ app.use(cookieParser());
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
-    userID: "aJvfe3"
+    userID: "userRandomID"
   },
   "9sm5xK": {
     longURL: "http://www.google.com",
     userID:"aJvfe3"
   }
+  
 };
 
 
@@ -55,7 +56,7 @@ const users = {
 const generateRandomString = function(length=6){
     return Math.random().toString(36).substr(2, length)
 };
-console.log(generateRandomString());
+//console.log(generateRandomString());
 
 //handle registration error - if email already exists, do not re-register them
 //function that will look at the email and scroll through the users object database
@@ -71,46 +72,80 @@ const findUserByEmail = (email, userDatabase) => {
     return false;
 };
 
+//is the password on file the same as the one in the database? come back to this!!!
+// const isPasswordUsed = function(password) {
+//   for (let key in users) {
+//     if (password === users[key]["password"]) {
+//       return true;
+//     }
+//   }
+//   return false;
+// };
+
+
 //create a helper function that searches through each url in the database, and only returns the urls that have that specific users userid
+const urlsForUser = function(id) {
+  let userURLDatabase = {};
+  //console.log(urlDatabase);
+  for (let key in urlDatabase) {
+    if (urlDatabase[key]["userID"] === id) { //if the userID in the database is equal to the id of the user signed in
+      userURLDatabase[key] = urlDatabase[key];
+    }
+  }
+  return userURLDatabase; //this will return a custom database obj
+};
+
 
 //------------------------------------------------------END POINTS & ROUTES ----------------------------->
+//HOMEPAGE
 app.get("/", (req, res) => {
   res.send("Hello!"); //respond with hello when client enters home
 });
 
+//SHOWS THE URLS THAT ARE AVAILABLE
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase); //this will print a JSON string representing all the items for the urlDatabase Object
 }); 
 
+//// DISPLAY OF THE CURRENT URLs IN DATABASE 
 app.get("/urls", (req, res) => {
   const user_id = req.cookies.user_id
+  console.log("This is the user Id:", user_id);
+  if (!user_id) { // if a user is not logged in, they cannot see the url page displaying the URLS
+    res.redirect("/login");
+    return;
+  }
+
+  let customURLDatabase = urlsForUser(user_id); //custom URL database for each user
   const templateVars = { 
-    urls: urlDatabase, 
+    //urls: urlDatabase, // we no longer want each user to have acess to entire database, just the ones that match their userid/that they put in
+    urls: customURLDatabase,
     user: users[user_id] //shows user now
   }; 
-  res.render("urls_index", templateVars); 
+  console.log(templateVars);
+
+  res.render("urls_index", templateVars);//template to display all the URLs and their shortened forms 
 });
 
 //we need the data from the form to be submitted and place somwewhere 
 app.post("/urls", (req, res) => {
   const user_id = req.cookies.user_id
-  // a non-logged in user cannot add a new url
-  if (user_id) {
-    //generate a random string for our new long URL
-    //shortURL-longURL key-value pair are saved to the urlDatabase with our randomnly generated string
-    const newShortURL = generateRandomString();
-    const newLongURL = {
-      longURL: req.body.longURL
-    };
+  
+  if (user_id) { //// a non-logged in user cannot add a new url
+    const newShortURL = generateRandomString(); ////generate a random string for our new long URL
+    const newLongURL = { longURL: req.body.longURL, userID: user_id}; //need to add the user to the database
+   
     urlDatabase[newShortURL]= newLongURL; ; //this gives random string id to the new long URL that client provided
-    //can be rewritten as urlDatabase[randomString]longURL
+    
+    
     res.redirect(`/urls/${newShortURL}`);//will redirect to the longURL page of that randomstring
+ 
   } else {
     res.status(403).send("Sorry but you cannot access this page if you are not logged. Please log in or register for an account")
   }
 });
 
-//this will render/create the page to create new urls and show it to the client/user
+//FORM TO CREATE NEW URL ------ this will render/create the page to create new urls and show it to the client/user
 app.get("/urls/new", (req, res) => {
   const user_id = req.cookies.user_id
   //if we do not have a user logged in, then redirect them to the login page
@@ -125,18 +160,27 @@ app.get("/urls/new", (req, res) => {
 });
 
 
-//should render and send us back to the show page with all of the urls
+//PAGE WITH THE SHORT URL, its LONG URL and edit form on the bottom
 app.get("/urls/:shortURL", (req, res) => {
   const user_id = req.cookies.user_id
+  const shortURL= req.params.shortURL;
   const templateVars = {
-    shortURL: req.params.shortURL,
+    shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
     user: users[user_id]
   };
-  res.render("urls_show", templateVars);
+  // check if the shortURL belongs to the user 
+  if(urlDatabase[shortURL].userID === user_id) {
+      // if the user owns the url, render urls_show
+      res.render("urls_show", templateVars); //urls_show is the page where we see the the long url, short url and edit form on the bottom
+  } else {
+    //if not, say : you are not authorized to access this url 
+    res.status(400).send("You are not authorized to access this url")
+  }
+
 }); 
 
-//redirects us to the longURL only when we're on the show page not when we submit the form
+// REDIRECTS US TO THE website OF THE SHORT URL KEY
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL; 
   //req.param is anything passed as a parameter anythign after the colon ...via :shortURL
@@ -146,17 +190,20 @@ app.get("/u/:shortURL", (req, res) => {
   const templateVars = {
     user: users[user_id]
   };
-  //res.render("urls_show", templateVars);
-  //redirect to longURL
   res.redirect(longURL);
 });
 
 
-//add an edit form + which will update the resource (i.e. the long url associated with the key)
-app.post("/urls/:id", (req, res) => {
+//EDIT FORM-- this will update the resource (i.e. the long url associated with the key)
+app.post("/urls/:id", (req, res) => { 
+  // ^ id = the short url key
+  const user_id = req.cookies.user_id
+  if (!user_id) { //// if a user is not logged in, they cannot see the url page displaying the URLS
+    res.redirect("/login");
+    return;
+  }
   const shortURL = req.params.id;
   const fullURL = req.body.longURL;
-
   urlDatabase[shortURL].longURL = fullURL;
   res.redirect("/urls");
 });
@@ -278,10 +325,13 @@ app.post("/logout", (req, res) => {
 //updated delete button (in index) and operation
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL]; //looks for specific key/shorturl and deletes it
+  //update so that only the creater of the URL can delete specific urls
+
   res.redirect("/urls");
 })
 
 //-------
+//TEST PATH
 // //response can contain HTML code, which would be rendered in the client browser.
 // app.get("/hello", (req, res) => {
 //   const templateVars = {username: req.cookies["username"]}
