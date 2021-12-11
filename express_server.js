@@ -110,7 +110,7 @@ app.get("/urls.json", (req, res) => {
 //// DISPLAY OF THE CURRENT URLs IN DATABASE 
 app.get("/urls", (req, res) => {
   const user_id = req.cookies.user_id
-  console.log("This is the user Id:", user_id);
+  console.log("This is the user Id of the client:", user_id);
   if (!user_id) { // if a user is not logged in, they cannot see the url page displaying the URLS
     res.redirect("/login");
     return;
@@ -202,10 +202,18 @@ app.post("/urls/:id", (req, res) => {
     res.redirect("/login");
     return;
   }
+  
   const shortURL = req.params.id;
   const fullURL = req.body.longURL;
   urlDatabase[shortURL].longURL = fullURL;
-  res.redirect("/urls");
+
+  // check if the shortURL belongs to the user 
+  if(urlDatabase[shortURL].userID === user_id) {
+    res.redirect("/urls");
+  } else { 
+    //if not, say : you are not authorized to access this url 
+    res.status(400).send("You are not authorized to edit this url");
+  }
 });
 
 //----------------------------------------------Authentication Routes -------------------->
@@ -324,11 +332,20 @@ app.post("/logout", (req, res) => {
 //------------------ DELETE-------------------------------
 //updated delete button (in index) and operation
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL]; //looks for specific key/shorturl and deletes it
+  // delete urlDatabase[req.params.shortURL]; //looks for specific key/shorturl and deletes it
+  
   //update so that only the creater of the URL can delete specific urls
-
-  res.redirect("/urls");
-})
+  // check if the shortURL belongs to the user 
+  const user_id = req.cookies.user_id
+  const shortURL= req.params.shortURL;
+  if(urlDatabase[shortURL].userID === user_id) {
+    delete urlDatabase[shortURL]; //looks for specific key/shorturl and deletes it
+    res.redirect("/urls");
+  } else { 
+    //if not, say : you are not authorized to access this url 
+    res.status(400).send("You are not authorized to delete this url");
+  }
+});
 
 //-------
 //TEST PATH
