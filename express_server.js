@@ -98,10 +98,13 @@ app.post("/urls", (req, res) => {
   if (user_id) {
     //generate a random string for our new long URL
     //shortURL-longURL key-value pair are saved to the urlDatabase with our randomnly generated string
-    const randomString = generateRandomString();
-    urlDatabase.randomString.longURL = req.body.longURL; //this gives random string id to the new long URL that client provided
+    const newShortURL = generateRandomString();
+    const newLongURL = {
+      longURL: req.body.longURL
+    };
+    urlDatabase[newShortURL]= newLongURL; ; //this gives random string id to the new long URL that client provided
     //can be rewritten as urlDatabase[randomString]longURL
-    res.redirect(`/urls/${randomString}`);//will redirect to the longURL page of that randomstring
+    res.redirect(`/urls/${newShortURL}`);//will redirect to the longURL page of that randomstring
   } else {
     res.status(403).send("Sorry but you cannot access this page if you are not logged. Please log in or register for an account")
   }
@@ -135,7 +138,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
 //redirects us to the longURL only when we're on the show page not when we submit the form
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL; //object containing properties mapped to a named route parameters//the long URL will look for its shortURL key in the database
+  const longURL = urlDatabase[req.params.shortURL].longURL; 
   //req.param is anything passed as a parameter anythign after the colon ...via :shortURL
   //can be rewritten as urlDatabase.req.params.shortURL.longURL
 
@@ -145,7 +148,7 @@ app.get("/u/:shortURL", (req, res) => {
   };
   //res.render("urls_show", templateVars);
   //redirect to longURL
-  res.redirect(longURL, templateVars);
+  res.redirect(longURL);
 });
 
 
@@ -153,7 +156,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const fullURL = req.body.longURL;
-  console.log("editing", req.body);
+
   urlDatabase[shortURL].longURL = fullURL;
   res.redirect("/urls");
 });
@@ -257,7 +260,7 @@ app.post("/login", (req, res) => {
   };
 
   //user is not authenticated
-  res.status(403).send("Could not find an account associated iwth that email. Please register and create an account.")
+  res.status(403).send("Could not find an account associated with that email. Please register and create an account.")
 
 
 });
