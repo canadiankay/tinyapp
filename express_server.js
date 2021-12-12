@@ -10,6 +10,9 @@ since the header is shown across all of the ejs pages, and we use the variable '
 //we do not need an else statement after an if statement if the if-statement has a return because it tells us to stop (see app.post (login))
 
 We will get rid of cookie parser as it's not safe for sensitive info; instead we will use cookie sessions instead
+wewant to hash the password; hashing takes a long time and anything that takes a long time is async- typically we would use an async function but to keep it simple for our app, we're using the sync 'hash' version 
+hashing encryption can't be reversed so one we encrypt the password, user cna't use their registered password anymore since it's changed/scrambled
+
 
 */
 const PORT = 8080;
@@ -18,6 +21,10 @@ const app = express(); //create express app
 const bodyParser = require("body-parser"); //body-parser library will convert the request body from a Buffer into string that we can read.
 //const cookieParser = require('cookie-parser'); //no longer need this as it's not safe
 const cookieSession = require('cookie-session')
+const bcrypt = require('bcryptjs'); //used to hash passwords
+const salt = bcrypt.genSaltSync(10);//thiswill generate the salt that will be combinediwtho our password...10 is the duration counter
+
+
 
 
 app.set('view engine', 'ejs');
@@ -25,8 +32,8 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 //app.use(cookieParser()); //no longer need this 
 app.use(cookieSession({
-  name: 'session',
-  keys: ['key1', 'key2']
+  name: 'session', //this is the name of the cookie
+  keys: ['key1', 'key2'] //in the future, create random strings to be keys for security purposes, doesnt matter rn
 }))
 
 
@@ -105,7 +112,8 @@ app.get("/urls.json", (req, res) => {
 
 //// DISPLAY OF THE CURRENT URLs IN DATABASE
 app.get("/urls", (req, res) => {
-  const user_id = req.cookies.user_id;
+  //const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   console.log("This is the user Id of the client:", user_id);
   if (!user_id) { // if a user is not logged in, they cannot see the url page displaying the URLS
     res.redirect("/login");
@@ -125,7 +133,8 @@ app.get("/urls", (req, res) => {
 
 //we need the data from the form to be submitted and place somwewhere
 app.post("/urls", (req, res) => {
-  const user_id = req.cookies.user_id;
+  // const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   
   if (user_id) { //// a non-logged in user cannot add a new url
     const newShortURL = generateRandomString(); ////generate a random string for our new long URL
@@ -143,7 +152,8 @@ app.post("/urls", (req, res) => {
 
 //FORM TO CREATE NEW URL ------ this will render/create the page to create new urls and show it to the client/user
 app.get("/urls/new", (req, res) => {
-  const user_id = req.cookies.user_id;
+  //const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   //if we do not have a user logged in, then redirect them to the login page
   if (!user_id) {
     res.redirect("/login");
@@ -158,7 +168,8 @@ app.get("/urls/new", (req, res) => {
 
 //PAGE WITH THE SHORT URL, its LONG URL and edit form on the bottom
 app.get("/urls/:shortURL", (req, res) => {
-  const user_id = req.cookies.user_id;
+  //const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const shortURL = req.params.shortURL;
   const templateVars = {
     shortURL,
@@ -188,7 +199,8 @@ app.get("/u/:shortURL", (req, res) => {
 //EDIT FORM-- this will update the resource (i.e. the long url associated with the key)
 app.post("/urls/:id", (req, res) => {
   // ^ id = the short url key
-  const user_id = req.cookies.user_id;
+  //const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   if (!user_id) { //// if a user is not logged in, they cannot see the url page displaying the URLS
     res.redirect("/login");
     return;
@@ -216,7 +228,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   
   //update so that only the creater of the URL can delete specific urls
   // check if the shortURL belongs to the user
-  const user_id = req.cookies.user_id;
+  //const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const shortURL = req.params.shortURL;
   if (urlDatabase[shortURL].userID === user_id) {
     delete urlDatabase[shortURL]; //looks for specific key/shorturl and deletes it
@@ -228,7 +241,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 //-------------------------------------------------------------------Authentication Routes --------------------------------------------------------------------->
-// --------------------------REGISTRATION------------------->
+// -------------------------------------------REGISTRATION-------------------------------->
 app.get("/register", (req, res) => { //endpoint
   const templateVars = {
     user: null //since we haven't logged in yet here, user would be null here
@@ -267,31 +280,36 @@ app.post("/register", (req, res) => { //when I submit register form I want the i
   const userEmail = findUserByEmail(email,users);
   // ^we want to find the user using their email through the usersdb
   if (userEmail) { //if user already exists then no need to create a new user
-    res.status(403).send('Sorry, user already exists!');
+    res.status(403).send('User already exists! Please head to the login page to log in.');
     return;
   }
 
   //generate a new user id
   const id = generateRandomString();
 
-  //create new user AND add their name, email, password to our users database
+  //create new user (object) AND add their name, email, password to our users database
   const newUser = { //This endpoint should add a new user object to the global users object
     id: id,
     email: email,
-    password: password
+    //password: password //we need to encrypt this password
+    password: bcrypt.hashSync(password, salt) 
+      //password is the password we're receiving in plain text from client
+      //salt is already defined in the glboal scope
   };
+  
 
   // add the new user to our users obj database (i.e. we need to ascribe it to a key value and in our case the random generated string)
-  users[id] = newUser; //we want it to be equal to new user object above
+  users[id] = newUser; //we're gonna add the newuser to the users database 
 
   //set the cookie-- we want to the browser keep the user id in the cookie
-  res.cookie("user_id", id); //test cookie in browswer
+  //res.cookie("user_id", id); //<--- modify this
+  req.session.user_id = id; // alternative syntax =>  req.session['user_id'] = id
 
   //redirect to '/urls'
   res.redirect("/urls");
 });
 
-//----------------------------------------------------------------LOGIN ---------->
+//----------------------------------------------------------------LOGIN --------------------->
 // temporaray route to show all the users in the users database
 app.get('/users.json', (req, res) => {
   res.json(users);
@@ -315,11 +333,15 @@ app.post("/login", (req, res) => {
   const user = findUserByEmail(email, users);
 
   //if user exists and password in the db matches what they gave us in the form
-  if (user && user.password === password) {
-    //then user is authenticated == if yes, then we want to log them in
+  //if (user && user.password === password) { //then user is authenticated == if yes, then we want to log them in
+    // now that we've hashed user.password, this will never be equal so we need bcrypt to match the hashed passwrod
+  if (user && bcrypt.compareSync(password, user.password)) { //we need it to compare the password from the form to the user's password in plaintext
+   
+  
 
     //we want broswer to store the user id in a cookie
-    res.cookie('user_id', user.id); //set cookie to their user id
+    //res.cookie('user_id', user.id); //set cookie to their user id
+    req.session.user_id = user.id; 
     res.redirect("/urls");
     return;
   }
@@ -331,10 +353,12 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  const user_id = req.cookies.user_id;
+  //const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
 
   //clear cookie
-  res.clearCookie("user_id", user_id);
+  //res.clearCookie("user_id", user_id);
+  req.session["user_id"] = null;
   res.redirect("/urls");
 });
 
