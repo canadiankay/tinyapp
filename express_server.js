@@ -9,18 +9,25 @@ since the header is shown across all of the ejs pages, and we use the variable '
 
 //we do not need an else statement after an if statement if the if-statement has a return because it tells us to stop (see app.post (login))
 
+We will get rid of cookie parser as it's not safe for sensitive info; instead we will use cookie sessions instead
+
 */
 const PORT = 8080;
 const express = require("express");
 const app = express(); //create express app
 const bodyParser = require("body-parser"); //body-parser library will convert the request body from a Buffer into string that we can read.
-const cookieParser = require('cookie-parser');
+//const cookieParser = require('cookie-parser'); //no longer need this as it's not safe
+const cookieSession = require('cookie-session')
 
 
 app.set('view engine', 'ejs');
 //----------------------------------------------------------------MIDDLEWARE----> will run for every request
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+//app.use(cookieParser()); //no longer need this 
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2']
+}))
 
 
 // ----------------------------------------------------------------DATA -----> //in memory database
