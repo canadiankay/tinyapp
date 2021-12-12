@@ -51,17 +51,17 @@ const urlDatabase = {
   
 };
 
-
+// because we are encrypting the passwords, we can't use these passowrds to log in  anymore => use hashsync
 const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "ilove@baking.com",
-    password: "sugar"
+    password: bcrypt.hashSync("sugar", salt)
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "cookies@everyday.com",
-    password: "chocolate"
+    password: bcrypt.hashSync("chocolate", salt)
   }
 };
 
