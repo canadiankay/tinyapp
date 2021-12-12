@@ -1,20 +1,3 @@
-/* MY NOTES
-res.render ("name of template", an object with a bunch of key/value pairs) so that in our template, we can access each of these key/value pairs
-if you have the urls it'll be on the index page
-setCookie has two parameters (cookie name, the value you want associated to the cookie )
-clearCookies takes one parameter (cookie name)
-instead of doing console log of the user database, we can alternatively do domain'/users.json' as that will list them all as well
-since the header is shown across all of the ejs pages, and we use the variable 'user' in the header, we need user to be in every single app.get that renders these pages
-//therefore need a templateVars everywhere with the user key anywhere we are rendering a file
-
-//we do not need an else statement after an if statement if the if-statement has a return because it tells us to stop (see app.post (login))
-
-We will get rid of cookie parser as it's not safe for sensitive info; instead we will use cookie sessions instead
-wewant to hash the password; hashing takes a long time and anything that takes a long time is async- typically we would use an async function but to keep it simple for our app, we're using the sync 'hash' version 
-hashing encryption can't be reversed so one we encrypt the password, user cna't use their registered password anymore since it's changed/scrambled
-
-
-*/
 const PORT = 8080;
 const express = require("express");
 const app = express(); //create express app
@@ -23,8 +6,6 @@ const bodyParser = require("body-parser"); //body-parser library will convert th
 const cookieSession = require('cookie-session')
 const bcrypt = require('bcryptjs'); //used to hash passwords
 const salt = bcrypt.genSaltSync(10);//thiswill generate the salt that will be combinediwtho our password...10 is the duration counter
-
-
 
 
 app.set('view engine', 'ejs');
@@ -36,8 +17,7 @@ app.use(cookieSession({
   keys: ['key1', 'key2'] //in the future, create random strings to be keys for security purposes, doesnt matter rn
 }))
 
-
-// ----------------------------------------------------------------DATA -----> //in memory database
+// ----------------------------------------------------------------DATA -------------------------mv ---> //in memory database
 //this object is used to keep track of all the URLs- shortURL keys and longURL values
 const urlDatabase = {
   "b2xVn2": {
