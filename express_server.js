@@ -122,7 +122,7 @@ app.post("/urls", (req, res) => {
   
   if (user_id) { //// a non-logged in user cannot add a new url
     const newShortURL = generateRandomString(); ////generate a random string for our new long URL
-    const newLongURL = { longURL: req.body.longURL, userID: user_id}; //need to add the user to the database
+    const newLongURL = { longURL: req.body.longURL, userID: user_id}; //need to add the user to the database as well so it's linked to the newURL
    
     urlDatabase[newShortURL] = newLongURL;  //this gives random string id to the new long URL that client provided
     
@@ -257,10 +257,9 @@ app.post("/register", (req, res) => { //when I submit register form I want the i
 
   //handle registration errors - if email already exists-- use function we created above ---- moved to helper functions
     
-  const user = findUserByEmail(email,users);
+  const userEmail = findUserByEmail(email,users);
   // ^we want to find the user using their email through the usersdb
-
-  if (user) { //if user already exists then no need to create a new user
+  if (userEmail) { //if user already exists then no need to create a new user
     res.status(403).send('Sorry, user already exists!');
     return;
   }
