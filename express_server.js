@@ -6,7 +6,11 @@ const bodyParser = require("body-parser"); //body-parser library will convert th
 const cookieSession = require('cookie-session')
 const bcrypt = require('bcryptjs'); //used to hash passwords
 const salt = bcrypt.genSaltSync(10);//thiswill generate the salt that will be combinediwtho our password...10 is the duration counter
-
+const { 
+  generateRandomString, 
+  findUserByEmail, 
+  urlsForUser
+} = require("./helpers"); //Helper functions moved to helpers file
 
 app.set('view engine', 'ejs');
 //----------------------------------------------------------------MIDDLEWARE----> will run for every request
@@ -17,7 +21,7 @@ app.use(cookieSession({
   keys: ['key1', 'key2'] //in the future, create random strings to be keys for security purposes, doesnt matter rn
 }))
 
-// ----------------------------------------------------------------DATA -------------------------mv ---> //in memory database
+// ----------------------------------------------------------------DATA ----------------------------> 
 //this object is used to keep track of all the URLs- shortURL keys and longURL values
 const urlDatabase = {
   "b2xVn2": {
@@ -28,7 +32,6 @@ const urlDatabase = {
     longURL: "http://www.google.com",
     userID:"aJvfe3"
   }
-  
 };
 
 // because we are encrypting the passwords, we can't use these passowrds to log in  anymore => use hashsync
@@ -45,40 +48,6 @@ const users = {
   }
 };
 
-// ---------------------------------------------------------------- HELPER FUNCTIONS------------------------------------------------->
-// generate random six-character userID key for our urls in the database
-const generateRandomString = function(length = 6) {
-  return Math.random().toString(36).substr(2, length);
-};
-//console.log(generateRandomString());
-
-//handle registration error - if email already exists, do not re-register them
-//function that will look at the email and scroll through the users object database
-const findUserByEmail = (email, userDatabase) => {
-  // for (let key in database)
-  for (let id in userDatabase) {
-    const user = users[id]; // => retrieve the value that's in id
-
-    if (user.email === email) { // check if email from form === email from the database
-      return user;
-    }
-  }
-  return false;
-};
-
-//create a helper function that searches through each url in the database, and only returns the urls that have that specific users userid
-const urlsForUser = function(id) {
-  let userURLDatabase = {};
-  //console.log(urlDatabase);
-  for (let key in urlDatabase) {
-    if (urlDatabase[key]["userID"] === id) { //if the userID in the database is equal to the id of the user signed in
-      userURLDatabase[key] = urlDatabase[key];
-    }
-  }
-  return userURLDatabase; //this will return a custom database obj
-};
-
-
 //------------------------------------------------------END POINTS & ROUTES ----------------------------->
 //HOMEPAGE
 app.get("/", (req, res) => {
@@ -94,13 +63,13 @@ app.get("/urls.json", (req, res) => {
 app.get("/urls", (req, res) => {
   //const user_id = req.cookies.user_id;
   const user_id = req.session.user_id;
-  console.log("This is the user Id of the client:", user_id);
+  //console.log("This is the user Id of the client:", user_id);
   if (!user_id) { // if a user is not logged in, they cannot see the url page displaying the URLS
     res.redirect("/login");
     return;
   }
 
-  let customURLDatabase = urlsForUser(user_id); //custom URL database for each user
+  let customURLDatabase = urlsForUser(user_id, urlDatabase); //custom URL database for each user
   const templateVars = {
     //urls: urlDatabase, // we no longer want each user to have acess to entire database, just the ones that match their userid/that they put in
     urls: customURLDatabase,
@@ -116,15 +85,19 @@ app.post("/urls", (req, res) => {
   // const user_id = req.cookies.user_id;
   const user_id = req.session.user_id;
   
-  if (user_id) { //// a non-logged in user cannot add a new url
+  if (user_id) { 
     const newShortURL = generateRandomString(); ////generate a random string for our new long URL
-    const newLongURL = { longURL: req.body.longURL, userID: user_id}; //need to add the user to the database as well so it's linked to the newURL
-   
+    const newLongURL = { 
+      longURL: req.body.longURL, 
+      userID: user_id
+    }; //need to add the user to the database as well so it's linked to the newURL
     urlDatabase[newShortURL] = newLongURL;  //this gives random string id to the new long URL that client provided
-    
-    
+
+    //console.log(urlDatabase);
+  
     res.redirect(`/urls/${newShortURL}`);//will redirect to the longURL page of that randomstring
  
+  // a non-logged in user cannot add a new url
   } else {
     res.status(403).send("Sorry but you cannot access this page if you are not logged. Please log in or register for an account");
   }
@@ -189,8 +162,8 @@ app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const fullURL = req.body.longURL;
   urlDatabase[shortURL].longURL = fullURL;
-  console.log("This is the shortURL:", shortURL);
-  console.log("This is the fullURL:", fullURL);
+  // console.log("This is the shortURL:", shortURL);
+  // console.log("This is the fullURL:", fullURL);
 
   // check if the shortURL belongs to the user
   if (urlDatabase[shortURL].userID === user_id) {
@@ -240,20 +213,8 @@ app.post("/register", (req, res) => { //when I submit register form I want the i
 
   //handle registration errors - if email and/or password are blank
   if (email === "" || password === "") {
-    return res.status(400).send("Please enter a valid email address and/or password");
+    return res.status(400).send("Please ensure both fields are filled. Enter both a valid email address and/or password.");
   }
-  //---------------------------------------------------------------- MOVED TO HELPER FUNCTIONS B/C WE REUSE THIS IN LOGIN
-  // //function that will look at the email and scroll through the users object database
-  // const findUserByEmail = (email, users) => {
-  // // for (let key in database)
-  //   for (let id in users) {
-  //     const user = users[id]; // => retrieve the value that's in id
-  //     if (user.email === email) {
-  //       return user;
-  //     }
-  //   }
-  //   return false;
-  // };
 
   //handle registration errors - if email already exists-- use function we created above ---- moved to helper functions
     
@@ -271,8 +232,7 @@ app.post("/register", (req, res) => { //when I submit register form I want the i
   const newUser = { //This endpoint should add a new user object to the global users object
     id: id,
     email: email,
-    //password: password //we need to encrypt this password
-    password: bcrypt.hashSync(password, salt) 
+    password: bcrypt.hashSync(password, salt) //encrypt this password
       //password is the password we're receiving in plain text from client
       //salt is already defined in the glboal scope
   };
@@ -308,6 +268,11 @@ app.post("/login", (req, res) => {
   const email = req.body.email; //this matches the email attribute form the register form
   const password = req.body.password;
 
+  //handle registration errors - if email and/or password are blank
+  if (email === "" || password === "") {
+    return res.status(400).send("Please ensure both fields are filled. Enter both a valid email address and/or password.");
+  }
+
   //retrive the user with that email from the users database
   //chcek if user exists-- use for in loop that we made previously to check if email is there
   const user = findUserByEmail(email, users);
@@ -316,9 +281,6 @@ app.post("/login", (req, res) => {
   //if (user && user.password === password) { //then user is authenticated == if yes, then we want to log them in
     // now that we've hashed user.password, this will never be equal so we need bcrypt to match the hashed passwrod
   if (user && bcrypt.compareSync(password, user.password)) { //we need it to compare the password from the form to the user's password in plaintext
-   
-  
-
     //we want broswer to store the user id in a cookie
     //res.cookie('user_id', user.id); //set cookie to their user id
     req.session.user_id = user.id; 
