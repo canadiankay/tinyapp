@@ -3,25 +3,25 @@ const express = require("express");
 const app = express(); //create express app
 const bodyParser = require("body-parser"); //body-parser library will convert the request body from a Buffer into string that we can read.
 //const cookieParser = require('cookie-parser'); //no longer need this as it's not safe
-const cookieSession = require('cookie-session')
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs'); //used to hash passwords
 const salt = bcrypt.genSaltSync(10);//thiswill generate the salt that will be combinediwtho our password...10 is the duration counter
-const { 
-  generateRandomString, 
-  findUserByEmail, 
+const {
+  generateRandomString,
+  findUserByEmail,
   urlsForUser
 } = require("./helpers"); //Helper functions moved to helpers file
 
 app.set('view engine', 'ejs');
 //----------------------------------------------------------------MIDDLEWARE----> will run for every request
 app.use(bodyParser.urlencoded({extended: true}));
-//app.use(cookieParser()); //no longer need this 
+//app.use(cookieParser()); //no longer need this
 app.use(cookieSession({
   name: 'session', //this is the name of the cookie
   keys: ['key1', 'key2'] //in the future, create random strings to be keys for security purposes, doesnt matter rn
-}))
+}));
 
-// ----------------------------------------------------------------DATA ----------------------------> 
+// ----------------------------------------------------------------DATA ---------------------------->
 //this object is used to keep track of all the URLs- shortURL keys and longURL values
 const urlDatabase = {
   "b2xVn2": {
@@ -85,10 +85,10 @@ app.post("/urls", (req, res) => {
   // const user_id = req.cookies.user_id;
   const user_id = req.session.user_id;
   
-  if (user_id) { 
+  if (user_id) {
     const newShortURL = generateRandomString(); ////generate a random string for our new long URL
-    const newLongURL = { 
-      longURL: req.body.longURL, 
+    const newLongURL = {
+      longURL: req.body.longURL,
       userID: user_id
     }; //need to add the user to the database as well so it's linked to the newURL
     urlDatabase[newShortURL] = newLongURL;  //this gives random string id to the new long URL that client provided
@@ -233,13 +233,13 @@ app.post("/register", (req, res) => { //when I submit register form I want the i
     id: id,
     email: email,
     password: bcrypt.hashSync(password, salt) //encrypt this password
-      //password is the password we're receiving in plain text from client
-      //salt is already defined in the glboal scope
+    //password is the password we're receiving in plain text from client
+    //salt is already defined in the glboal scope
   };
   
 
   // add the new user to our users obj database (i.e. we need to ascribe it to a key value and in our case the random generated string)
-  users[id] = newUser; //we're gonna add the newuser to the users database 
+  users[id] = newUser; //we're gonna add the newuser to the users database
 
   //set the cookie-- we want to the browser keep the user id in the cookie
   //res.cookie("user_id", id); //<--- modify this
@@ -279,13 +279,17 @@ app.post("/login", (req, res) => {
 
   //if user exists and password in the db matches what they gave us in the form
   //if (user && user.password === password) { //then user is authenticated == if yes, then we want to log them in
-    // now that we've hashed user.password, this will never be equal so we need bcrypt to match the hashed passwrod
+  // now that we've hashed user.password, this will never be equal so we need bcrypt to match the hashed passwrod
   if (user && bcrypt.compareSync(password, user.password)) { //we need it to compare the password from the form to the user's password in plaintext
     //we want broswer to store the user id in a cookie
     //res.cookie('user_id', user.id); //set cookie to their user id
-    req.session.user_id = user.id; 
+    req.session.user_id = user.id;
     res.redirect("/urls");
     return;
+
+    //if the email exists but the password is incorrect
+  } else if (user && !bcrypt.compareSync(password, user.password)) {
+    res.send("Please type in the correct password associated with this account.");
   }
 
   //user is not authenticated
@@ -295,9 +299,6 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  //const user_id = req.cookies.user_id;
-  const user_id = req.session.user_id;
-
   //clear cookie
   //res.clearCookie("user_id", user_id);
   req.session["user_id"] = null;

@@ -17,7 +17,7 @@ const findUserByEmail = (email, users) => {
       return user;
     }
   }
-  return false;
+  return null;
 };
 
 //create a helper function that searches through each url in the database, and only returns the urls that have that specific users userid
@@ -33,7 +33,7 @@ const urlsForUser = function(id, urlDatabase) {
 };
 
 
-module.exports = { 
-  generateRandomString, 
-  findUserByEmail, 
+module.exports = {
+  generateRandomString,
+  findUserByEmail,
   urlsForUser };
