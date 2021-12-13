@@ -1,21 +1,9 @@
-// const urlDatabase = {
-//   "b2xVn2": {
-//     longURL: "http://www.lighthouselabs.ca",
-//     userID: "userRandomID"
-//   },
-//   "9sm5xK": {
-//     longURL: "http://www.google.com",
-//     userID:"aJvfe3"
-//   }
-// };
-
-
 //Helper Functions
+
 // generate random six-character userID key for our urls in the database
 const generateRandomString = function(length = 6) {
   return Math.random().toString(36).substr(2, length);
 };
-//console.log(generateRandomString());
 
 
 //handle registration error - if email already exists, do not re-register them
