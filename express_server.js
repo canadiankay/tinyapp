@@ -95,7 +95,7 @@ app.post("/urls", (req, res) => {
   const user_id = req.session.user_id;
   
   if (user_id) {
-    const newShortURL = generateRandomString(); ////generate a random string for our new long URL
+    const newShortURL = generateRandomString(); 
     const newLongURL = {
       longURL: req.body.longURL,
       userID: user_id
@@ -244,8 +244,8 @@ app.post("/register", (req, res) => {
 
   //create new user (object) AND add their name, email, password to our users database
   const newUser = { 
-    id: id,
-    email: email,
+    id,
+    email,
     password: bcrypt.hashSync(password, salt)
   };
   

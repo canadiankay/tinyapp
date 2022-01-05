@@ -1,10 +1,7 @@
 //Helper Functions
 
 // generate random six-character userID key for our urls in the database
-const generateRandomString = function(length = 6) {
-  return Math.random().toString(36).substr(2, length);
-};
-
+const generateRandomString = (length = 6)=> Math.random().toString(36).substr(2, length)
 
 //handle registration error - if email already exists, do not re-register them
 //function that will look at the email and scroll through the users object database
