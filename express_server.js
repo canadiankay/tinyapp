@@ -286,7 +286,7 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  req.session["user_id"] = null; //clear cookie
+  req.session = null; //clear cookie
   res.redirect("/urls");
 });
 
