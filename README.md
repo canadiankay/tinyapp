@@ -8,8 +8,6 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 !["This is the page that a user will first see once they are logged in. It will show all of the long URLs they have shorted. Note, if a user has just created an account, this page will be blank."](https://github.com/canadiankay/tinyapp/blob/master/docs/urls.png?raw=true)
 
-!["This is the page where a user can create a shortURL by typing in a longURL in the field."](https://github.com/canadiankay/tinyapp/blob/master/docs/create-short-url.png)
-
 
 !["This is the page that an individual will be met with, either once they have created a shortURL, or if they try to edit the longURL associated with their shortURL."](https://github.com/canadiankay/tinyapp/blob/master/docs/urls-short-longurl.png)
 
