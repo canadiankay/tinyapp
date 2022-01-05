@@ -48,8 +48,23 @@ const users = {
 //------------------------------------------------------END POINTS & ROUTES ----------------------------->
 //HOMEPAGE
 app.get("/", (req, res) => {
-  res.send("Hello!"); //respond with hello when client enters home
+  //res.send("Hello!"); //respond with hello when client enters home
+  
+  const user_id = req.session.user_id;
+    
+  //if user is not logged in: redirect to /login
+  if (!user_id) {
+    res.redirect("/login");
+    return;
+  } else {
+  //if user is logged in: redirect to /urls 
+    res.redirect("/urls");
+  }
 });
+
+
+
+
 
 //SHOWS THE URLS THAT ARE AVAILABLE
 app.get("/urls.json", (req, res) => {
