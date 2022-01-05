@@ -63,9 +63,6 @@ app.get("/", (req, res) => {
 });
 
 
-
-
-
 //SHOWS THE URLS THAT ARE AVAILABLE
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase); //this will print a JSON string representing all the items for the urlDatabase Object
@@ -156,8 +153,16 @@ app.get("/urls/:shortURL", (req, res) => {
 
 // REDIRECTS US TO THE WEBSITE OF THE SHORT URL KEY
 app.get("/u/:shortURL", (req, res) => {
+
+  //if short URL is assigned to valid longURl, redirects to page
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
+
+  //if short URL is not assigned to a valid longURL, return an error message
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.send("Error: The page doesn't exist.");
+  }
+  
 });
 
 
