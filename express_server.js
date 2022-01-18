@@ -1,26 +1,29 @@
 const PORT = 8080;
+const app = express();
+
 const express = require("express");
-const app = express(); 
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
+const cookieParser = require("cookie-parser");
 const bcrypt = require('bcryptjs'); //used to hash passwords
-const salt = bcrypt.genSaltSync(10);//this will generate the salt that will be combinediwtho our password...
+const salt = bcrypt.genSaltSync(10);
 const {
   generateRandomString,
   findUserByEmail,
   urlsForUser
-} = require('./helpers'); //Helper functions moved to helpers file
+} = require('./helpers'); //Helper functions moved to this file
 
-app.set('view engine', 'ejs');
 
 //----------------------------------------------------------------MIDDLEWARE----> will run for every request
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
 app.use(cookieSession({
   name: 'session',
-  keys: ['key1', 'key2']
+  keys: ['key1']
 }));
+app.set('view engine', 'ejs');
 
-// ----------------------------------------------------------------DATA ---------------------------->
+// ---------------------------------------------DATA ---------------------------->
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
@@ -73,21 +76,22 @@ app.get("/urls", (req, res) => {
   const user_id = req.session.user_id;
   //console.log("This is the user ID of the client:", user_id);
 
+  let customURLDatabase = urlsForUser(user_id, urlDatabase);
+
   // if a user is not logged in, they should not see the url page displaying the URLS
   if (!user_id) { 
     res.redirect("/login");
-    return;
+  
+    //if logged in, they should see the url page displaying their URLS
+  } else {
+    //custom URL database for each user
+     
+    const templateVars = {
+      urls: customURLDatabase,
+      user: users[user_id]
+    };
+    res.render("urls_index", templateVars);
   }
-
-  //custom URL database for each user
-  let customURLDatabase = urlsForUser(user_id, urlDatabase); 
-
-  const templateVars = {
-    urls: customURLDatabase,
-    user: users[user_id]
-  };
-
-  res.render("urls_index", templateVars);//template to display all the URLs and their shortened forms
 });
 
 // THIS WILL DISPLAY THE DATA SUBMITTED BY THE CREATE SHORT FORM 
@@ -118,22 +122,19 @@ app.get("/urls/new", (req, res) => {
 
   //if we do not have a user logged in, then redirect them to the login page
   if (!user_id) {
-    res.redirect("/login");
-    return;
+    return res.redirect("/login");
+  } else {
+    const templateVars = {user: users[user_id]};
+    res.render("urls_new", templateVars);
   }
-  const templateVars = {
-    user: users[user_id]
-  };
-  res.render("urls_new", templateVars);
 });
 
 
 //PAGE WITH THE SHORT URL, its LONG URL and edit form on the bottom
 app.get("/urls/:shortURL", (req, res) => {
   const user_id = req.session.user_id;
-  const shortURL = req.params.shortURL;
   const templateVars = {
-    shortURL,
+    shortURL:req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
     user: users[user_id]
   };
@@ -146,7 +147,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
   } else {
     //if not, say : you are not authorized to access this url
-    res.status(400).send("You are not authorized to access this url");
+    res.status(404).send("<html>You are not authorized to access this url. Please <a href='/login'>login.</a></html>");
   }
 
 });
@@ -154,48 +155,40 @@ app.get("/urls/:shortURL", (req, res) => {
 // REDIRECTS US TO THE WEBSITE OF THE SHORT URL KEY
 app.get("/u/:shortURL", (req, res) => {
 
+  const user_id = req.session.user_id;
+  if (!user_id) {
+    res.status(404).send('<html>You are not authorized to access this URL. Please <a href="/login">login.</a></html>');
+    return
+  }
+
   //if short URL is assigned to valid longURl, redirects to page
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
-
-  //if short URL is not assigned to a valid longURL, return an error message
-  if (!urlDatabase[req.params.shortURL]) {
-    return res.send("Error: The page doesn't exist.");
-  }
-  
-});
+});  
 
 
 //EDIT FORM-- this will update the resource (i.e. the long url associated with the key)
 app.post("/urls/:id", (req, res) => {
-  // ^ id = the short url key
   const user_id = req.session.user_id;
-  // if a user is not logged in, they cannot see the url page displaying the URLS
-  if (!user_id) { 
-    res.redirect("/login");
-    return;
-  }
-  
   const shortURL = req.params.id;
   const fullURL = req.body.longURL;
-  urlDatabase[shortURL].longURL = fullURL;
 
   // check if the shortURL belongs to the user
   if (urlDatabase[shortURL].userID === user_id) {
+    urlDatabase[shortURL].longURL = fullURL;
     res.redirect("/urls");
   } else {
-    //if not, say : you are not authorized to access this url
     res.status(400).send("You are not authorized to edit this url");
   }
 });
 
 //-------------------------- DELETE-------------------------------
-//updated delete button (in index) and operation
+//only the creator of the URL can delete specific urls
 app.post("/urls/:shortURL/delete", (req, res) => {  
-  //update so that only the creater of the URL can delete specific urls
-  // check if the shortURL belongs to the user
   const user_id = req.session.user_id;
   const shortURL = req.params.shortURL;
+
+  // check if the shortURL belongs to the user
   if (urlDatabase[shortURL].userID === user_id) {
     delete urlDatabase[shortURL]; //looks for specific key/shorturl and deletes it
     res.redirect("/urls");
@@ -208,11 +201,18 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 //-------------------------------------------------------------------Authentication Routes --------------------------------------------------------------------->
 // -------------------------------------------REGISTRATION-------------------------------->
 app.get("/register", (req, res) => { 
-  const templateVars = {
-    user: null
-  };
-  res.render("register", templateVars); // render registration page
-  res.status(404);
+  const user_id = req.session.user_id;
+  const user = users[user_id]
+  const templateVars = {user: user};
+
+  // if a user is not logged in, it should take them to registeration page
+  if (!user_id) { 
+    res.render("register", templateVars); // render registration page
+  
+    //if logged in, they should see the url page 
+  } else {
+    res.redirect("/urls");
+  }
 });
 
 
@@ -224,7 +224,7 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
 
   //handle registration errors - if email and/or password are blank
-  if (email === "" || password === "") {
+  if (!email || !password) {
     return res.status(400).send("Please ensure both fields are filled. Enter both a valid email address and/or password.");
   }
 
@@ -268,10 +268,18 @@ app.get('/users.json', (req, res) => {
 });
 
 app.get("/login", (req, res) => { 
-  const templateVars = {
-    user: null
-  };
-  res.render("login", templateVars);
+  const user_id = req.session.user_id;
+  const user = users[user_id]
+  const templateVars = {user: user};
+
+  // if a user is not logged in, it should take them to login page
+  if (!user_id) { 
+    res.render("login", templateVars); // render registration page
+  
+    //if logged in, they should see the url page 
+  } else {
+    res.redirect("/urls");
+  }
 });
 
 //authenticate the user
