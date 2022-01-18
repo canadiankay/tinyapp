@@ -50,16 +50,14 @@ const users = {
 //------------------------------------------------------END POINTS & ROUTES ----------------------------->
 //HOMEPAGE
 app.get("/", (req, res) => {
-  //res.send("Hello!"); //respond with hello when client enters home
-  
   const user_id = req.session.user_id;
     
   //if user is not logged in: redirect to /login
   if (!user_id) {
-    res.redirect("/login");
-    return;
+    return res.redirect("/login");
+
+    //if user is logged in: redirect to /urls 
   } else {
-  //if user is logged in: redirect to /urls 
     res.redirect("/urls");
   }
 });
@@ -74,7 +72,6 @@ app.get("/urls.json", (req, res) => {
 app.get("/urls", (req, res) => {
   const user_id = req.session.user_id;
   //console.log("This is the user ID of the client:", user_id);
-
   let customURLDatabase = urlsForUser(user_id, urlDatabase);
 
   // if a user is not logged in, they should not see the url page displaying the URLS
@@ -83,8 +80,7 @@ app.get("/urls", (req, res) => {
   
     //if logged in, they should see the url page displaying their URLS
   } else {
-    //custom URL database for each user
-     
+    //custom URL database for each user 
     const templateVars = {
       urls: customURLDatabase,
       user: users[user_id]
@@ -157,8 +153,7 @@ app.get("/u/:shortURL", (req, res) => {
 
   const user_id = req.session.user_id;
   if (!user_id) {
-    res.status(404).send('<html>You are not authorized to access this URL. Please <a href="/login">login.</a></html>');
-    return
+    return res.status(404).send('<html>You are not authorized to access this URL. Please <a href="/login">login.</a></html>');
   }
 
   //if short URL is assigned to valid longURl, redirects to page
@@ -231,7 +226,7 @@ app.post("/register", (req, res) => {
   //handle registration errors - if email already exists-- use function we created above ---- moved to helper functions
     
   const userEmail = findUserByEmail(email,users);
-  // ^we want to find the user using their email through the usersdb
+  
 
   //if user already exists then no need to create a new user
   if (userEmail) { 
@@ -251,7 +246,6 @@ app.post("/register", (req, res) => {
   
 
   // add the new user to our users obj database (i.e. we need to ascribe it to a key value and in our case the random generated string)
-  //we're gonna add the newuser to the users database
   users[id] = newUser; 
 
   //set the cookie-- we want to the browser keep the user id in the cookie
@@ -299,9 +293,8 @@ app.post("/login", (req, res) => {
 
    //if user is there, we need to also check that hteir password is
   if (user && bcrypt.compareSync(password, user.password)) { 
-    req.session.user_id = user.id; //we want broswer to store the user id in a cookie
-    res.redirect("/urls");
-    return;
+    req.session.user_id = user.id; //we want broswer to store the user id in a cookie;
+    return res.redirect("/urls");
 
     //if the email exists but the password is incorrect
   } else if (user && !bcrypt.compareSync(password, user.password)) {
