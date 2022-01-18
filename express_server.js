@@ -1,7 +1,6 @@
 const PORT = 8080;
-const app = express();
-
 const express = require("express");
+const app = express();
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const cookieParser = require("cookie-parser");
@@ -133,6 +132,7 @@ app.get("/urls/new", (req, res) => {
 //PAGE WITH THE SHORT URL, its LONG URL and edit form on the bottom
 app.get("/urls/:shortURL", (req, res) => {
   const user_id = req.session.user_id;
+  const shortURL= req.params.shortURL;
   const templateVars = {
     shortURL:req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
@@ -309,7 +309,7 @@ app.post("/login", (req, res) => {
   }
 
   //user is not authenticated
-  res.status(401).send("Could not find an account associated with that email. Please register and create an account.")
+  res.status(401).send("<html>Could not find an account associated with that email. Please <a href='/register'>register</a> and create an account.</html>")
 
 });
 
