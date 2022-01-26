@@ -151,9 +151,10 @@ app.get("/urls/:shortURL", (req, res) => {
 // REDIRECTS US TO THE WEBSITE OF THE SHORT URL KEY
 app.get("/u/:shortURL", (req, res) => {
 
-  const user_id = req.session.user_id;
-  if (!user_id) {
-    return res.status(404).send('<html>You are not authorized to access this URL. Please <a href="/login">login.</a></html>');
+  //check to see if URL exists
+
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.status(404).send('<html>This short url does not exist!</a></html>');
   }
 
   //if short URL is assigned to valid longURl, redirects to page
